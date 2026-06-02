@@ -1,5 +1,5 @@
 /**
- * Robust WordPress Scraper (primeurdunovels.com)
+ * Robust WordPress Scraper (urdunovelsmag.com)
  * یہ اسکرپٹ ہر مہینے کی پہلی تاریخ کو چلے گا اور پچھلے پورے مہینے کا ڈیٹا نکالے گا
  */
 
@@ -49,8 +49,8 @@ function robustScraper() {
       return; 
     }
 
-    // ورڈ پریس API یو آر ایل (primeurdunovels.com)
-    const apiUrl = `https://primeurdunovels.com/wp-json/wp/v2/posts?after=${afterDate}&before=${beforeDate}&per_page=100&page=${pageNum}`;
+    // ورڈ پریس API یو آر ایل (urdunovelsmag.com)
+    const apiUrl = `https://urdunovelsmag.com/wp-json/wp/v2/posts?after=${afterDate}&before=${beforeDate}&per_page=100&page=${pageNum}`;
     
     try {
       const response = UrlFetchApp.fetch(apiUrl, {"muteHttpExceptions": true});
