@@ -60,8 +60,19 @@ function startCleaningProcess() {
       var pubDate = row[3] ? row[3].toString().trim() : "";
       var sourceSite = row[4] ? row[4].toString().trim() : "";
       
-      if (rawTitle === "" || rawTitle.indexOf('?') !== -1 || rawLink === "") {
-        deletedRowsLog.push([rawTitle, rawLink, sourceSite, "Step 2/5: Empty or Invalid (Question Marks)", targetMonth]);
+      // ==========================================
+      // 🐛 STEP 2: CLEAR SEPARATED ERROR LOGGING
+      // ==========================================
+      if (rawTitle === "") {
+        deletedRowsLog.push([rawTitle, rawLink, sourceSite, "Step 2: Empty Title", targetMonth]);
+        continue;
+      }
+      if (rawTitle.indexOf('?') !== -1) {
+        deletedRowsLog.push([rawTitle, rawLink, sourceSite, "Step 2: Corrupted Text (Question Marks)", targetMonth]);
+        continue;
+      }
+      if (rawLink === "") {
+        deletedRowsLog.push([rawTitle, rawLink, sourceSite, "Step 2: Empty Link (No Download URL)", targetMonth]);
         continue;
       }
 
@@ -98,7 +109,7 @@ function startCleaningProcess() {
       cleanedTitle = cleanedTitle.replace(/&amp;/g, '&');
       cleanedTitle = cleanedTitle.replace(/&#8217;/g, "'");
 
-      // 🚀 NEW: Remove 'novel' followed by digits (e.g., novel20712, Novel 12345)
+      // 🚀 Remove 'novel' followed by digits (e.g., novel20712, Novel 12345)
       cleanedTitle = cleanedTitle.replace(/(?:\s|-|_)*novel\s*\d+(?:\s|-|_)*/gi, ' ');
 
       // Remove specific junk phrases
@@ -140,13 +151,13 @@ function startCleaningProcess() {
         continue;
       }
 
-      // 🚀 NEW: EXACT DUPLICATE CHECK (Step 13)
+      // 🚀 EXACT DUPLICATE CHECK (Step 13)
       var uniqueKey = cleanedTitle.toLowerCase() + "|" + cleanedLink.toLowerCase();
       if (seenRecords.has(uniqueKey)) {
         deletedRowsLog.push([cleanedTitle, cleanedLink, sourceSite, "Step 13: Exact Duplicate Row", targetMonth]);
         continue;
       }
-      seenRecords.add(uniqueKey); // Agar naya hai toh memory mein save kar lo
+      seenRecords.add(uniqueKey); // Memory mein save kar lo
 
       finalCleanedData.push([cleanedTitle, cleanedLink, postUrl, pubDate, sourceSite, targetMonth]);
     }
