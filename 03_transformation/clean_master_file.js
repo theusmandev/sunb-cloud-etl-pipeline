@@ -1,7 +1,7 @@
 // ====================================================================
 // 🛠️ SETTINGS: APNI RAW MASTER SHEET KI ID YAHAN DAALEIN
 // ====================================================================
-var RAW_MASTER_SHEET_ID = "1sWEmGf_cJGvqa5Pe6S7OLug9bZ9jpRYuOQJrGbjGJ1g"; 
+var RAW_MASTER_SHEET_ID = "1nCZGpXlXgHjRhvFfoCQCvGrrjs7wzE7GGZJPCinLeB4"; 
 // ====================================================================
 
 // CUSTOM MENU: Sheet refresh karne par chalega
@@ -49,6 +49,9 @@ function startCleaningProcess() {
     var titleCleaningLog = [];
     var fixedUrlsLog = [];
     
+    // 🚀 NEW: Duplicates ko track karne ke liye Set memory
+    var seenRecords = new Set(); 
+    
     for (var i = 1; i < data.length; i++) {
       var row = data[i];
       var rawTitle = row[0] ? row[0].toString().trim() : "";
@@ -86,16 +89,19 @@ function startCleaningProcess() {
       }
 
       // ==========================================
-      // 🧹 NEW: AGGRESSIVE TITLE CLEANING LOGIC
+      // 🧹 AGGRESSIVE TITLE CLEANING LOGIC
       // ==========================================
       var cleanedTitle = rawTitle;
 
-      // Fix HTML Entities (like &#8211; which represents a dash)
+      // Fix HTML Entities
       cleanedTitle = cleanedTitle.replace(/&#8211;/g, '-');
       cleanedTitle = cleanedTitle.replace(/&amp;/g, '&');
       cleanedTitle = cleanedTitle.replace(/&#8217;/g, "'");
 
-      // Remove specific junk phrases identified from raw CSV data
+      // 🚀 NEW: Remove 'novel' followed by digits (e.g., novel20712, Novel 12345)
+      cleanedTitle = cleanedTitle.replace(/(?:\s|-|_)*novel\s*\d+(?:\s|-|_)*/gi, ' ');
+
+      // Remove specific junk phrases
       cleanedTitle = cleanedTitle.replace(/(?:\s|-)*Urdu Novelians(?:\s|-)*/gi, ' ');
       cleanedTitle = cleanedTitle.replace(/(?:\s|-)*ZNZ(?:\s|-)*/gi, ' ');
       cleanedTitle = cleanedTitle.replace(/(?:\s|-)*Complete\s*PDF(?:\s|-)*/gi, ' ');
@@ -133,6 +139,14 @@ function startCleaningProcess() {
         deletedRowsLog.push([cleanedTitle, cleanedLink, sourceSite, "Step 12: Title has 1 or 2 words only", targetMonth]);
         continue;
       }
+
+      // 🚀 NEW: EXACT DUPLICATE CHECK (Step 13)
+      var uniqueKey = cleanedTitle.toLowerCase() + "|" + cleanedLink.toLowerCase();
+      if (seenRecords.has(uniqueKey)) {
+        deletedRowsLog.push([cleanedTitle, cleanedLink, sourceSite, "Step 13: Exact Duplicate Row", targetMonth]);
+        continue;
+      }
+      seenRecords.add(uniqueKey); // Agar naya hai toh memory mein save kar lo
 
       finalCleanedData.push([cleanedTitle, cleanedLink, postUrl, pubDate, sourceSite, targetMonth]);
     }
