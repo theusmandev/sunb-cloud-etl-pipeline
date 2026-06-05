@@ -1,7 +1,7 @@
 // ====================================================================
 // 🛠️ SETTINGS: APNI RAW MASTER SHEET KI ID YAHAN DAALEIN
 // ====================================================================
-var RAW_MASTER_SHEET_ID = "1nCZGpXlXgHjRhvFfoCQCvGrrjs7wzE7GGZJPCinLeB4"; 
+var RAW_MASTER_SHEET_ID = "1sWEmGf_cJGvqa5Pe6S7OLug9bZ9jpRYuOQJrGbjGJ1g"; 
 // ====================================================================
 
 // CUSTOM MENU: Sheet refresh karne par chalega
@@ -85,15 +85,30 @@ function startCleaningProcess() {
         continue;
       }
 
-      // TITLE CLEANING
+      // ==========================================
+      // 🧹 NEW: AGGRESSIVE TITLE CLEANING LOGIC
+      // ==========================================
       var cleanedTitle = rawTitle;
+
+      // Fix HTML Entities (like &#8211; which represents a dash)
+      cleanedTitle = cleanedTitle.replace(/&#8211;/g, '-');
+      cleanedTitle = cleanedTitle.replace(/&amp;/g, '&');
+      cleanedTitle = cleanedTitle.replace(/&#8217;/g, "'");
+
+      // Remove specific junk phrases identified from raw CSV data
+      cleanedTitle = cleanedTitle.replace(/(?:\s|-)*Urdu Novelians(?:\s|-)*/gi, ' ');
+      cleanedTitle = cleanedTitle.replace(/(?:\s|-)*ZNZ(?:\s|-)*/gi, ' ');
+      cleanedTitle = cleanedTitle.replace(/(?:\s|-)*Complete\s*PDF(?:\s|-)*/gi, ' ');
+      cleanedTitle = cleanedTitle.replace(/(?:\s|-)*Complete(?:\s|-)*/gi, ' ');
+      cleanedTitle = cleanedTitle.replace(/(?:\s|-)*Read Online\s*&\s*Download\s*PDF(?:\s|-)*/gi, ' ');
+      cleanedTitle = cleanedTitle.replace(/(?:\s|-)*Read Online(?:\s|-)*/gi, ' ');
+
+      // Normal character cleanup
       cleanedTitle = cleanedTitle.replace(/_/g, ' ').replace(/-/g, ' ');
-      cleanedTitle = cleanedTitle.replace(/\s+/g, ' ').trim();
-      cleanedTitle = toTitleCase(cleanedTitle);
-      
       cleanedTitle = cleanedTitle.replace(/\.(pdf|zip|rar|epub|mobi|txt|docx|html)$/gi, '');
       cleanedTitle = cleanedTitle.replace(/[\[\]\(\)\{\}@#\$%\^&\*\+=\\|<>\/\?]/g, ' ');
-      
+
+      // Deep junk word removal loop
       var prevTitle = "";
       while (cleanedTitle !== prevTitle) {
         prevTitle = cleanedTitle;
@@ -102,9 +117,11 @@ function startCleaningProcess() {
         cleanedTitle = cleanedTitle.replace(/(?:\s|\.|\-|_)*(?:urdu\s+novel|novel|download)(?:\s|\.|\-|_)*$/gi, '');
         cleanedTitle = cleanedTitle.replace(/[\.\s]+$/, '');
       }
-      
+
+      // Final Polish
       cleanedTitle = cleanedTitle.replace(/\s+/g, ' ').trim();
       cleanedTitle = toTitleCase(cleanedTitle);
+      // ==========================================
       
       if (rawTitle !== cleanedTitle) {
         titleCleaningLog.push([rawTitle, cleanedTitle, targetMonth]);
@@ -134,7 +151,6 @@ function startCleaningProcess() {
 }
 
 // 2. 📥 DOWNLOAD SPECIFIC MONTH DATA TO CSV DIRECTLY
-// 2. 📥 DOWNLOAD SPECIFIC MONTH DATA TO CSV DIRECTLY
 function downloadMonthDataCSV() {
   var ui = SpreadsheetApp.getUi();
   var ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -150,8 +166,6 @@ function downloadMonthDataCSV() {
   if (response.getSelectedButton() !== ui.Button.OK) return;
   var targetMonth = response.getResponseText().trim();
   
-  // 🚀 MAGIC FIX: getValues() ki jagah getDisplayValues() use kiya hai
-  // Is se Google Sheets usay date nahi banayega, balke text hi parhega
   var data = productionSheet.getDataRange().getDisplayValues(); 
   
   var csvContent = "";
@@ -165,7 +179,7 @@ function downloadMonthDataCSV() {
     var row = data[i];
     var rowMonth = row[5] ? row[5].toString().trim() : "";
     
-    // Exact text match (March-2026 === March-2026)
+    // Exact text match
     if (rowMonth.toLowerCase() === targetMonth.toLowerCase()) {
       var title = row[0].toString().replace(/"/g, '""');
       var link = row[1].toString().replace(/"/g, '""');
